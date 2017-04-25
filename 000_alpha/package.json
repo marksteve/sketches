@@ -1,0 +1,30 @@
+{
+  "name": "alpha",
+  "private": true,
+  "scripts": {
+    "test": "standard",
+    "start": "budo index.js:bundle.js --live -- -t glslify",
+    "build-index": "node build-index.js > index.html",
+    "build-js": "browserify -t glslify index.js | uglifyjs -cm > bundle.js",
+    "build": "npm run build-index && npm run build-js"
+  },
+  "devDependencies": {
+    "browserify": "^13.1.0",
+    "budo": "^8.3.0",
+    "glslify": "^5.1.0",
+    "simple-html-index": "^1.4.0",
+    "standard": "^7.1.2",
+    "uglify-js": "^2.7.0"
+  },
+  "dependencies": {
+    "dom-css": "^2.0.1",
+    "extract-svg-path": "^2.1.0",
+    "glsl-random": "0.0.5",
+    "load-svg": "^1.0.0",
+    "svg-mesh-3d": "^1.1.0",
+    "three": "^0.79.0",
+    "three-orbit-controls": "^72.0.0",
+    "three-simplicial-complex": "^69.0.6",
+    "three-vignette-background": "^1.0.3"
+  }
+}
