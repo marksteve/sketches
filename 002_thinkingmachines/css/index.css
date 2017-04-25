@@ -1,0 +1,77 @@
+html, body { height: 100%; }
+
+body {
+  background: #c4230f;
+  color: white;
+  font: 16px/1.5 aktiv-grotesk, sans-serif;
+  margin: 0;
+}
+
+header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 3em 0;
+}
+
+h1, h2, h3, p, pre.language-js, figure { margin: 0 0 1.5em; }
+h1 { font-size: 1.728em; }
+h2 { font-size: 1.44em; }
+h3 { font-size: 1.2em; }
+a { color: inherit; }
+code { font-family: ubuntu-mono, monospace !important; }
+figcaption { font-size: 0.83em; text-align: center; }
+
+.logo {
+  width: 30em;
+  height: 30em;
+  margin-right: 3em;
+}
+
+.logo svg {
+	width: 100%;
+	height: 100%;
+}
+
+@media (max-width: 480px) {
+  header { margin-top: 1.5em; }
+  .logo {
+    width: 100vw;
+    height: 100vw;
+    margin-right: 0;
+  }
+}
+
+.logo line {
+  stroke: white;
+  stroke-linecap: round;
+}
+
+.text {
+  font-size: 2em;
+  line-height: 1.2;
+}
+
+.text h1 {
+  font-weight: 800;
+  margin: 0 0 .2em;
+}
+
+.text p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.text .desc {
+  display: inline-block;
+  width: 10em;
+  white-space: nowrap;
+}
+
+article {
+  box-sizing: border-box;
+  max-width: 40em;
+  margin: 0 auto 3em;
+  padding: 0 1.5em;
+}

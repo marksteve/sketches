@@ -7,5 +7,5 @@ func main() {
 	dc.DrawCircle(500, 500, 400)
 	dc.SetRGB(0, 0, 0)
 	dc.Fill()
-	dc.SavePNG("001_circle.png")
+	dc.SavePNG("circle.png")
 }

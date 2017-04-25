@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "babel --presets env --minified -o js/index.min.js js/index.js",
+    "watch": "babel --presets env --minified --watch -o js/index.min.js js/index.js"
+  },
+  "devDependencies": {
+    "babel": "^6.23.0",
+    "babel-cli": "^6.23.0",
+    "babel-preset-env": "^1.2.1"
+  }
+}
