@@ -5,9 +5,12 @@ body {
   color: white;
   font: 16px/1.5 aktiv-grotesk, sans-serif;
   margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-header {
+main {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -27,15 +30,13 @@ figcaption { font-size: 0.83em; text-align: center; }
   width: 30em;
   height: 30em;
   margin-right: 3em;
-}
-
-.logo svg {
-	width: 100%;
-	height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 @media (max-width: 480px) {
-  header { margin-top: 1.5em; }
+  main { margin-top: 1.5em; }
   .logo {
     width: 100vw;
     height: 100vw;

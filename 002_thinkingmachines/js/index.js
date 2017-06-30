@@ -1,28 +1,32 @@
-const d3 = window.d3
+const Two = window.Two
+const TWEEN = window.TWEEN
 const size = 6
 
-const logo = d3.select('.logo')
-const width = logo.property('clientWidth') - 100
-const height = logo.property('clientHeight') - 100
+const logo = document.querySelector('.logo')
+const width = logo.clientWidth
+const height = logo.clientHeight
+const two = new Two({ type: Two.Types.canvas, width, height }).appendTo(logo)
 
 // Position helpers
 
 const col = d => d % size
 const row = d => d / size | 0
-const x1 = d => col(d) * width / size
-const y1 = d => row(d) * height / size
-const x2 = d => (col(d) + 1) * width / size
-const y2 = d => (row(d) + 1) * height / size
+const border = 25
+const x1 = d => col(d) * (width - border * 2) / size + border
+const y1 = d => row(d) * (height - border * 2) / size + border
+const x2 = d => (col(d) + 1) * (width - border * 2) / size + border
+const y2 = d => (row(d) + 1) * (height - border * 2) / size + border
 
-function createGrid (el) {
-  const data = d3.range(size * size).map(d => {
-    return { x1: x1(d), y1: y1(d), x2: x2(d), y2: y2(d) }
-  })
-  el.selectAll('line').data(data).enter().append('line')
-    .attr('x1', d => d.x1)
-    .attr('y1', d => d.y1)
-    .attr('x2', d => d.x2)
-    .attr('y2', d => d.y2)
+function createGrid () {
+  const grid = []
+  for (let i = 0; i < size * size; i++) {
+    let line = two.makeLine(x1(i), y1(i), x2(i), y2(i))
+    line.stroke = '#ffffff'
+    line.linewidth = 5
+    line.cap = 'round'
+    grid.push(line)
+  }
+  return grid
 }
 
 // Transform flags
@@ -34,49 +38,52 @@ const t1 = 0x08 // Thickness 1
 const t2 = 0x10 // Thickness 2
 const t3 = 0x20 // Thickness 3
 
-function transformGrid (el, state) {
-  return el.selectAll('line').data(state)
-    .transition()
-      .duration(1000)
-      .attr('stroke-width', function (d) {
-        let w = 5
-        switch (true) {
-          case (d & t3) > 0: w *= 1.75
-          case (d & t2) > 0: w *= 1.75
-          case (d & t1) > 0: w *= 1.75
-        }
-        return w
+function transformGrid (grid, state) {
+  for (let i = 0; i < size * size; i++) {
+    let line = grid[i]
+    let lineState = state[i]
+    let nextWidth = 5
+    switch (true) {
+      case (lineState & t3) > 0: nextWidth *= 1.75
+      case (lineState & t2) > 0: nextWidth *= 1.75
+      case (lineState & t1) > 0: nextWidth *= 1.75
+    }
+    const nextRotation = lineState & b ? 0 : Math.PI / 2
+    new TWEEN.Tween({
+      linewidth: line.linewidth,
+      rotation: line.rotation
+    })
+      .easing(TWEEN.Easing.Exponential.InOut)
+      .to({
+        linewidth: nextWidth,
+        rotation: nextRotation
+      }, 1000)
+      .onUpdate(function () {
+        line.linewidth = this.linewidth
+        line.rotation = this.rotation
       })
-      .attrTween('transform', function (d, i) {
-        const transform = this.getAttribute('transform')
-        const deg = transform ? parseInt(transform.match(/rotate\((\d+)/)[1], 10) : 0
-        // SVG transform rotates from 0, 0 by default
-        // We need to rotate from the line center instead
-        const cx = x1(i) + width / size / 2
-        const cy = y1(i) + height / size / 2
-        const nextDeg = d & b ? 0 : 90
-        const delta = nextDeg - deg
-        return function (t) {
-          return `rotate(${deg + t * delta} ${cx} ${cy})`
-        }
-      })
+      .start()
+  }
 }
 
-const randChar = d3.randomUniform(33, 126)
+const randChar = _ => 33 + Math.floor(Math.random() * (126 - 33))
 
 function setDesc (el, text) {
-  el.transition()
-    .duration(1000)
-    .tween('text', function () {
-      return function (t) {
-        const slicedText = text.slice(0, t * text.length | 0)
-        const chars = d3.range((1 - t) * text.length).map(randChar)
-        const randText = String.fromCharCode(...chars)
-        window.requestAnimationFrame(function () {
-          el.text(slicedText + randText)
-        })
+  new TWEEN.Tween({ t: 0 })
+    .to({ t: 1 }, 1000)
+    .onUpdate(function () {
+      const t = this.t
+      const slicedText = text.slice(0, t * text.length | 0)
+      const chars = []
+      for (let i = 0; i < (1 - t) * text.length; i++) {
+        chars[i] = randChar()
       }
+      const randText = String.fromCharCode(...chars)
+      window.requestAnimationFrame(function () {
+        el.textContent = (slicedText + randText)
+      })
     })
+    .start()
 }
 
 const states = [
@@ -126,17 +133,17 @@ const states = [
   }
 ]
 
-const svg = logo.select('svg')
-const lines = svg.append('g').attr('transform', 'translate(50, 50)')
-const desc = d3.select('.desc')
+two.bind('update', function (t) {
+  TWEEN.update()
+}).play()
 
-function animate (i = 0) {
+const grid = createGrid()
+const desc = document.querySelector('.desc')
+
+function cycleState (i = 0) {
   const { descText, transform } = states[i % states.length]
-  transformGrid(lines, transform)
+  transformGrid(grid, transform)
   setDesc(desc, descText)
-  d3.timeout(_ => animate(i + 1), 3000)
+  setTimeout(_ => cycleState(i + 1), 3000)
 }
-
-createGrid(lines)
-animate()
-
+cycleState()
