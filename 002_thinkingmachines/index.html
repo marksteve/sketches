@@ -3,17 +3,177 @@
 <head>
   <title>Thinking Machines</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/prism.min.css">
   <link rel="stylesheet" href="css/index.css">
   <script src="https://use.typekit.net/tji0eve.js"></script>
   <script>try{Typekit.load({ async: true });}catch(e){}</script>
 <body>
-  <header>
-    <div class="logo"></div>
-    <div class="text">
-      <h1>Thinking<br>Machines</h1>
-      <p><span class="desc"></span>&nbsp;</p>
-    </div>
-  </header>
+  <article>
+    <h2><span>Sketch 002</span>: Recreating the TM logo animation in code</h2>
+    <p>Have you seen <a href="https://thinkingmachin.es/">Thinking Machines' website</a>
+    yet? No? Go take a look! I'll wait&hellip;</p>
+    <p>Did you see the GIF animation of the TM logo transitioning into various
+    configurations? Cool 'eh? It's quite a smart logo. A 6 x 6 grid of
+    diagonal lines that vary in weight and rotation. 4 line widths x 2 rotations
+    equals 8 variations per line. That's 8<sup>(6x6)</sup> = 3.25 x 10<sup>32</sup>
+    logo configurations! Of course not every configuration would look good but
+    a fraction of the available configurations is still a huge amount. The
+    animation of the logo is also quite mesmerizing. The transition between
+    configurations gives the very apt vibe of a "thinking machine".</p>
+    <p>So how do we recreate the GIF animation in code? We have several options
+    to do this in the browser. We can use JavaScript with DOM elements, SVG,
+    canvas or WebGL. I used <a href="https://d3js.org/">D3</a> with SVG the
+    first time I <a href="d3.html">tried to do this</a>. The result wasn't as performant as I
+    wanted it to be so I tried again using <a href="https://two.js.org/">Two.js</a>
+    with the canvas renderer.</p>
+    <h3>Canvas</h3>
+    <p>First, we initialize the canvas by setting it's dimension to the size of the
+    container element <code>.logo</code>.</p>
+    <pre><code class="language-js">const logo = document.querySelector('.logo')
+const width = logo.clientWidth
+const height = logo.clientHeight
+const two = new Two({ type: Two.Types.canvas, width, height }).appendTo(logo)</code></pre>
+    <h3>Grid</h3>
+    <p>The grid is made of 6 x 6 x 45&deg; lines. To draw a line, we need
+    two points: <code>(x1, y1)</code> and <code>(x2, y2)</code>.</p>
+    <p><img src="images/line.svg"></p>
+    <p>I wrote a few helper functions to compute line points given their index.</p>
+    <pre><code class="language-js">const size = 6
+const padding = 25
+const col = i => i % size
+const row = i => i / size | 0
+const x1 = d => col(d) * (width - padding * 2) / size + padding
+const y1 = d => row(d) * (height - padding * 2) / size + padding
+const x2 = d => (col(d) + 1) * (width - padding * 2) / size + padding
+const y2 = d => (row(d) + 1) * (height - padding * 2) / size +
+padding</code></pre>
+    <p>Note the extra padding. We need it to avoid clipping the lines during
+    animation. The lines are then added to the canvas with <code>two.makeLine(x1, y1, x2, y2)</code>.
+    <pre><code class="language-js">function createGrid () {
+  const grid = []
+  for (let i = 0; i < size * size; i++) {
+    let line = two.makeLine(x1(i), y1(i), x2(i), y2(i))
+    line.stroke = '#ffffff'
+    line.linewidth = 5
+    line.cap = 'round'
+    grid.push(line)
+  }
+  return grid
+}
+const grid = createGrid()</code></pre>
+    <p>Now we have a grid!</p>
+    <p><img src="images/grid.png"></p>
+    <h3>State</h3>
+    <p>Next we need a way to represent the state of the lines per logo configuration. We're
+    dealing with 2 transform attributes here: <code>linewidth</code> and <code>rotation</code>.
+    For this we use
+    <a href="http://www.learncpp.com/cpp-tutorial/3-8a-bit-flags-and-bit-masks/">bit flags</a>.</p>
+    <pre><code class="language-js">const f = 0x01  // Forward slash
+const b = 0x02  // Backward slash
+const t0 = 0x04 // Thickness 0
+const t1 = 0x08 // Thickness 1
+const t2 = 0x10 // Thickness 2
+const t3 = 0x20 // Thickness 3</code></pre>
+    <p>Bit flags allow us to write our configurations concisely. For example, this is how
+    we'd write the main configuration of the logo:</p>
+    <pre><code class="language-js">const state = [
+  t0 | b, t0 | b, t0 | b, t0 | b, t0 | f, t0 | f,
+  t0 | b, t2 | b, t1 | b, t2 | b, t2 | f, t0 | f,
+  t0 | b, t1 | b, t3 | b, t3 | f, t3 | b, t0 | f,
+  t0 | f, t1 | f, t3 | f, t3 | b, t3 | f, t0 | b,
+  t0 | f, t2 | f, t1 | f, t2 | f, t2 | b, t0 | b,
+  t0 | f, t0 | f, t0 | f, t0 | f, t0 | b, t0 | b
+]</code></pre>
+    <p>Attributes can be computed by checking for set bits.</p>
+    <pre><code class="language-js">function getLinewidth (lineState) {
+  let width = 5
+  switch (true) {
+    case (lineState & t3) > 0: width *= 1.75
+    case (lineState & t2) > 0: width *= 1.75
+    case (lineState & t1) > 0: width *= 1.75
+  }
+  return width
+}
+
+function getRotation (lineState) {
+  return lineState & b ? 0 : Math.PI / 2
+}</code></pre>
+    <p>We simply update grid elements to apply the transforms.</p>
+    <pre><code class="language-js">function transformGrid (grid, state) {
+  for (let i = 0; i < size * size; i++) {
+    let line = grid[i]
+    let lineState = state[i]
+    line.linewidth = getLinewidth(lineState)
+    line.rotation = getRotation(lineState)
+  }
+}
+transformGrid(grid, state)</code></pre>
+    <p>And... TADA!</p>
+    <p><img src="images/main-state.png"></p>
+    <h3>Animation</h3>
+    <p>We use <a href="https://github.com/tweenjs/tween.js">Tween.js</a> to
+    animate the transitions between configurations.</p>
+    <pre><code class="language-js">const nextLinewidth = getLinewidth(lineState)
+const nextRotation = getRotation(lineState)
+new TWEEN.Tween({
+  linewidth: line.linewidth,
+  rotation: line.rotation
+})
+  .easing(TWEEN.Easing.Exponential.InOut)
+  .to({
+    linewidth: nextLinewidth,
+    rotation: nextRotation
+  }, 1000)
+  .onUpdate(function () {
+    line.linewidth = this.linewidth
+    line.rotation = this.rotation
+  })
+  .start()</code></pre>
+    <p>Note that we need to run <code>TWEEN.update()</code> inside the animation
+    loop. We can do this by listening to the <code>update</code> event of
+    Two.js.</p>
+    <pre><code class="language-js">two.bind('update', function (t) {
+  TWEEN.update()
+}).play()</code></pre>
+    <p>As finishing touch, we can also recreate the type effect using Tween.js.</p>
+    <pre><code class="language-js">const randChar = _ => 33 + Math.floor(Math.random() * (126 - 33))
+function setDesc (el, text) {
+  new TWEEN.Tween({ t: 0 })
+    .to({ t: 1 }, 1000)
+    .onUpdate(function () {
+      const t = this.t
+      const slicedText = text.slice(0, t * text.length | 0)
+      const chars = []
+      for (let i = 0; i < (1 - t) * text.length; i++) {
+        chars[i] = randChar()
+      }
+      const randText = String.fromCharCode(...chars)
+      window.requestAnimationFrame(function () {
+        el.textContent = (slicedText + randText)
+      })
+    })
+    .start()
+}
+const desc = document.querySelector('.desc')</code></pre>
+    <p>Lastly, we cycle through the states using timeouts.</p>
+    <pre><code class="language-js">function cycleState (i = 0) {
+  const { descText, transform } = states[i % states.length]
+  transformGrid(grid, transform)
+  setDesc(desc, descText)
+  setTimeout(_ => cycleState(i + 1), 3000)
+}
+cycleState()</code></pre>
+    <p>And without further ado&hellip;</p>
+    <figure>
+      <div class="logo"></div>
+      <div class="text">
+        <h1>Thinking<br>Machines</h1>
+        <p><span class="desc"></span>&nbsp;</p>
+      </div>
+    </figure>
+    <p>The complete source of this sketch is available in <a href="https://github.com/marksteve/sketches/tree/master/002_thinkingmachines">GitHub</a>.</p>
+  </article>
   <script src="js/two.min.js"></script>
   <script src="js/Tween.min.js"></script>
   <script src="js/index.min.js"></script>
+  <script src="js/prism.min.js"></script>

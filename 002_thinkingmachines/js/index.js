@@ -1,6 +1,5 @@
 const Two = window.Two
 const TWEEN = window.TWEEN
-const size = 6
 
 const logo = document.querySelector('.logo')
 const width = logo.clientWidth
@@ -9,13 +8,14 @@ const two = new Two({ type: Two.Types.canvas, width, height }).appendTo(logo)
 
 // Position helpers
 
-const col = d => d % size
-const row = d => d / size | 0
-const border = 25
-const x1 = d => col(d) * (width - border * 2) / size + border
-const y1 = d => row(d) * (height - border * 2) / size + border
-const x2 = d => (col(d) + 1) * (width - border * 2) / size + border
-const y2 = d => (row(d) + 1) * (height - border * 2) / size + border
+const size = 6
+const padding = 25
+const col = i => i % size
+const row = i => i / size | 0
+const x1 = i => col(i) * (width - padding * 2) / size + padding
+const y1 = i => row(i) * (height - padding * 2) / size + padding
+const x2 = i => (col(i) + 1) * (width - padding * 2) / size + padding
+const y2 = i => (row(i) + 1) * (height - padding * 2) / size + padding
 
 function createGrid () {
   const grid = []
@@ -38,24 +38,33 @@ const t1 = 0x08 // Thickness 1
 const t2 = 0x10 // Thickness 2
 const t3 = 0x20 // Thickness 3
 
+function getLinewidth (lineState) {
+  let width = 5
+  switch (true) {
+    case (lineState & t3) > 0: width *= 1.75
+    case (lineState & t2) > 0: width *= 1.75
+    case (lineState & t1) > 0: width *= 1.75
+  }
+  return width
+}
+
+function getRotation (lineState) {
+  return lineState & b ? 0 : Math.PI / 2
+}
+
 function transformGrid (grid, state) {
   for (let i = 0; i < size * size; i++) {
     let line = grid[i]
     let lineState = state[i]
-    let nextWidth = 5
-    switch (true) {
-      case (lineState & t3) > 0: nextWidth *= 1.75
-      case (lineState & t2) > 0: nextWidth *= 1.75
-      case (lineState & t1) > 0: nextWidth *= 1.75
-    }
-    const nextRotation = lineState & b ? 0 : Math.PI / 2
+    const nextLinewidth = getLinewidth(lineState)
+    const nextRotation = getRotation(lineState)
     new TWEEN.Tween({
       linewidth: line.linewidth,
       rotation: line.rotation
     })
       .easing(TWEEN.Easing.Exponential.InOut)
       .to({
-        linewidth: nextWidth,
+        linewidth: nextLinewidth,
         rotation: nextRotation
       }, 1000)
       .onUpdate(function () {

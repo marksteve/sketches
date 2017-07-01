@@ -1,24 +1,15 @@
-html, body { height: 100%; }
+html, body {
+  font: 16px/1.5 aktiv-grotesk, sans-serif;
+  font-weight: 300;
+  height: 100%;
+}
 
 body {
   background: #c4230f;
   color: white;
-  font: 16px/1.5 aktiv-grotesk, sans-serif;
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 3em 0;
-}
-
-h1, h2, h3, p, pre.language-js, figure { margin: 0 0 1.5em; }
 h1 { font-size: 1.728em; }
 h2 { font-size: 1.44em; }
 h3 { font-size: 1.2em; }
@@ -27,26 +18,17 @@ code { font-family: ubuntu-mono, monospace !important; }
 figcaption { font-size: 0.83em; text-align: center; }
 
 .logo {
-  width: 30em;
-  height: 30em;
-  margin-right: 3em;
+  width: 30rem;
+  height: 30rem;
+  margin-right: 3rem;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .logo svg {
-	width: 100%;
-	height: 100%;
-}
-
-@media (max-width: 480px) {
-  header { margin-top: 1.5em; }
-  .logo {
-    width: 100vw;
-    height: 100vw;
-    margin-right: 0;
-  }
+  width: 100%;
+  height: 100%;
 }
 
 .logo line {
@@ -55,29 +37,72 @@ figcaption { font-size: 0.83em; text-align: center; }
 }
 
 .text {
-  font-size: 2em;
   line-height: 1.2;
+  font-size: 2rem;
 }
 
 .text h1 {
   font-weight: 800;
-  margin: 0 0 .2em;
+  margin: 0 0 .2rem;
 }
 
 .text p {
   margin: 0;
+  padding: 0;
   opacity: 0.8;
 }
 
 .text .desc {
   display: inline-block;
-  width: 10em;
+  width: 10rem;
   white-space: nowrap;
+  padding: 0;
 }
 
 article {
+  margin: 3rem auto;
+}
+
+h2, h3, p, pre.language-js {
+  margin: 0 auto 1.5rem;
   box-sizing: border-box;
-  max-width: 40em;
-  margin: 0 auto 3em;
-  padding: 0 1.5em;
+  max-width: 40rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+p img {
+  max-width: 100%;
+}
+
+h2 span {
+  position: relative;
+}
+
+h2 span:before {
+  content: ' ';
+  display: block;
+  position: absolute;
+  left: -.2rem;
+  top: .4rem;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+figure {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 6rem 0;
+}
+
+@media (max-width: 50rem) {
+  pre.language-js { border-radius: 0; }
+  figure .logo {
+    width: calc(100vw - 1.5rem);
+    height: calc(100vw - 1.5rem);
+    margin-right: 0;
+  }
 }
