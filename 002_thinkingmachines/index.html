@@ -29,27 +29,29 @@
     <h3>Canvas</h3>
     <p>First, we initialize the canvas by setting it's dimension to the size of the
     container element <code>.logo</code>.</p>
-    <pre><code class="language-js">const logo = document.querySelector('.logo')
+    <figure><pre><code class="language-js">const logo = document.querySelector('.logo')
 const width = logo.clientWidth
 const height = logo.clientHeight
-const two = new Two({ type: Two.Types.canvas, width, height }).appendTo(logo)</code></pre>
+const two = new Two({ type: Two.Types.canvas, width, height }).appendTo(logo)</code></pre></figure>
     <h3>Grid</h3>
     <p>The grid is made of 6 x 6 x 45&deg; lines. To draw a line, we need
     two points: <code>(x1, y1)</code> and <code>(x2, y2)</code>.</p>
-    <p><img src="images/line.svg"></p>
+    <figure><img src="images/line.svg" width="480"></figure>
     <p>I wrote a few helper functions to compute line points given their index.</p>
-    <pre><code class="language-js">const size = 6
+    <figure><pre><code class="language-js">const size = 6
 const padding = 25
 const col = i => i % size
 const row = i => i / size | 0
-const x1 = d => col(d) * (width - padding * 2) / size + padding
-const y1 = d => row(d) * (height - padding * 2) / size + padding
-const x2 = d => (col(d) + 1) * (width - padding * 2) / size + padding
-const y2 = d => (row(d) + 1) * (height - padding * 2) / size +
+const x1 = i => col(i) * (width - padding * 2) / size + padding
+const y1 = i => row(i) * (height - padding * 2) / size + padding
+const x2 = i => (col(i) + 1) * (width - padding * 2) / size + padding
+const y2 = i => (row(i) + 1) * (height - padding * 2) / size +
 padding</code></pre>
+      <figcaption><code>=></code> is similar to Python's <code>lambda</code>. e.g. <code>const square = i => i * i</code></figcaption>
+    </figure>
     <p>Note the extra padding. We need it to avoid clipping the lines during
     animation. The lines are then added to the canvas with <code>two.makeLine(x1, y1, x2, y2)</code>.
-    <pre><code class="language-js">function createGrid () {
+    <figure><pre><code class="language-js">function createGrid () {
   const grid = []
   for (let i = 0; i < size * size; i++) {
     let line = two.makeLine(x1(i), y1(i), x2(i), y2(i))
@@ -60,32 +62,32 @@ padding</code></pre>
   }
   return grid
 }
-const grid = createGrid()</code></pre>
+const grid = createGrid()</code></pre></figure>
     <p>Now we have a grid!</p>
-    <p><img src="images/grid.png"></p>
+    <figure><img src="images/grid.png" width="480"></figure>
     <h3>State</h3>
     <p>Next we need a way to represent the state of the lines per logo configuration. We're
     dealing with 2 transform attributes here: <code>linewidth</code> and <code>rotation</code>.
     For this we use
     <a href="http://www.learncpp.com/cpp-tutorial/3-8a-bit-flags-and-bit-masks/">bit flags</a>.</p>
-    <pre><code class="language-js">const f = 0x01  // Forward slash
+    <figure><pre><code class="language-js">const f = 0x01  // Forward slash
 const b = 0x02  // Backward slash
 const t0 = 0x04 // Thickness 0
 const t1 = 0x08 // Thickness 1
 const t2 = 0x10 // Thickness 2
-const t3 = 0x20 // Thickness 3</code></pre>
+const t3 = 0x20 // Thickness 3</code></pre></figure>
     <p>Bit flags allow us to write our configurations concisely. For example, this is how
     we'd write the main configuration of the logo:</p>
-    <pre><code class="language-js">const state = [
+    <figure><pre><code class="language-js">const state = [
   t0 | b, t0 | b, t0 | b, t0 | b, t0 | f, t0 | f,
   t0 | b, t2 | b, t1 | b, t2 | b, t2 | f, t0 | f,
   t0 | b, t1 | b, t3 | b, t3 | f, t3 | b, t0 | f,
   t0 | f, t1 | f, t3 | f, t3 | b, t3 | f, t0 | b,
   t0 | f, t2 | f, t1 | f, t2 | f, t2 | b, t0 | b,
   t0 | f, t0 | f, t0 | f, t0 | f, t0 | b, t0 | b
-]</code></pre>
+]</code></pre></figure>
     <p>Attributes can be computed by checking for set bits.</p>
-    <pre><code class="language-js">function getLinewidth (lineState) {
+    <figure><pre><code class="language-js">function getLinewidth (lineState) {
   let width = 5
   switch (true) {
     case (lineState & t3) > 0: width *= 1.75
@@ -97,9 +99,9 @@ const t3 = 0x20 // Thickness 3</code></pre>
 
 function getRotation (lineState) {
   return lineState & b ? 0 : Math.PI / 2
-}</code></pre>
+}</code></pre></figure>
     <p>We simply update grid elements to apply the transforms.</p>
-    <pre><code class="language-js">function transformGrid (grid, state) {
+    <figure><pre><code class="language-js">function transformGrid (grid, state) {
   for (let i = 0; i < size * size; i++) {
     let line = grid[i]
     let lineState = state[i]
@@ -107,36 +109,42 @@ function getRotation (lineState) {
     line.rotation = getRotation(lineState)
   }
 }
-transformGrid(grid, state)</code></pre>
+transformGrid(grid, state)</code></pre></figure>
     <p>And... TADA!</p>
-    <p><img src="images/main-state.png"></p>
+    <figure><img src="images/main-state.png" width="480"></figure>
     <h3>Animation</h3>
     <p>We use <a href="https://github.com/tweenjs/tween.js">Tween.js</a> to
     animate the transitions between configurations.</p>
-    <pre><code class="language-js">const nextLinewidth = getLinewidth(lineState)
-const nextRotation = getRotation(lineState)
-new TWEEN.Tween({
-  linewidth: line.linewidth,
-  rotation: line.rotation
-})
-  .easing(TWEEN.Easing.Exponential.InOut)
-  .to({
-    linewidth: nextLinewidth,
-    rotation: nextRotation
-  }, 1000)
-  .onUpdate(function () {
-    line.linewidth = this.linewidth
-    line.rotation = this.rotation
-  })
-  .start()</code></pre>
+    <figure><pre><code class="language-js">function transformGrid (grid, state) {
+  for (let i = 0; i < size * size; i++) {
+    let line = grid[i]
+    let lineState = state[i]
+    const nextLinewidth = getLinewidth(lineState)
+    const nextRotation = getRotation(lineState)
+    new TWEEN.Tween({
+      linewidth: line.linewidth,
+      rotation: line.rotation
+    })
+      .easing(TWEEN.Easing.Exponential.InOut)
+      .to({
+        linewidth: nextLinewidth,
+        rotation: nextRotation
+      }, 1000)
+      .onUpdate(function () {
+        line.linewidth = this.linewidth
+        line.rotation = this.rotation
+      })
+      .start()
+  }
+}</code></pre></figure>
     <p>Note that we need to run <code>TWEEN.update()</code> inside the animation
     loop. We can do this by listening to the <code>update</code> event of
     Two.js.</p>
-    <pre><code class="language-js">two.bind('update', function (t) {
+    <figure><pre><code class="language-js">two.bind('update', function (t) {
   TWEEN.update()
-}).play()</code></pre>
-    <p>As finishing touch, we can also recreate the type effect using Tween.js.</p>
-    <pre><code class="language-js">const randChar = _ => 33 + Math.floor(Math.random() * (126 - 33))
+}).play()</code></pre></figure>
+    <p>As finishing touch, we can also recreate the type effect with tweens.</p>
+    <figure><pre><code class="language-js">const randChar = _ => 33 + Math.floor(Math.random() * (126 - 33))
 function setDesc (el, text) {
   new TWEEN.Tween({ t: 0 })
     .to({ t: 1 }, 1000)
@@ -154,15 +162,61 @@ function setDesc (el, text) {
     })
     .start()
 }
-const desc = document.querySelector('.desc')</code></pre>
+const desc = document.querySelector('.desc')</code></pre></figure>
     <p>Lastly, we cycle through the states using timeouts.</p>
-    <pre><code class="language-js">function cycleState (i = 0) {
+    <figure><pre><code class="language-js">const states = [
+  {
+    descText: 'Data Strategy',
+    transform: [
+      t0 | b, t0 | b, t0 | b, t0 | b, t0 | f, t0 | f,
+      t0 | b, t2 | b, t1 | b, t2 | b, t2 | f, t0 | f,
+      t0 | b, t1 | b, t3 | b, t3 | f, t3 | b, t0 | f,
+      t0 | f, t1 | f, t3 | f, t3 | b, t3 | f, t0 | b,
+      t0 | f, t2 | f, t1 | f, t2 | f, t2 | b, t0 | b,
+      t0 | f, t0 | f, t0 | f, t0 | f, t0 | b, t0 | b
+    ]
+  },
+  {
+    descText: 'Data Engineering',
+    transform: [
+      t0 | b, t0 | b, t0 | b, t1 | f, t1 | f, t1 | f,
+      t1 | b, t1 | b, t1 | b, t2 | f, t2 | f, t2 | f,
+      t2 | b, t2 | b, t2 | b, t3 | f, t3 | f, t3 | f,
+      t3 | f, t3 | f, t3 | f, t2 | b, t2 | b, t2 | b,
+      t2 | f, t2 | f, t2 | f, t1 | b, t1 | b, t1 | b,
+      t1 | f, t1 | f, t1 | f, t0 | b, t0 | b, t0 | b
+    ]
+  },
+  {
+    descText: 'Data Science',
+    transform: [
+      t0 | f, t0 | f, t0 | b, t0 | b, t0 | b, t0 | b,
+      t0 | f, t1 | f, t0 | f, t0 | f, t3 | f, t0 | b,
+      t1 | f, t1 | f, t2 | f, t3 | f, t0 | f, t2 | b,
+      t2 | b, t0 | f, t3 | f, t2 | f, t1 | f, t1 | f,
+      t0 | b, t3 | f, t0 | f, t0 | f, t1 | f, t0 | f,
+      t0 | b, t0 | b, t0 | b, t0 | b, t0 | f, t0 | f
+    ]
+  },
+  {
+    descText: 'Data Storytelling',
+    transform: [
+      t0 | f, t1 | f, t3 | f, t3 | b, t1 | b, t0 | b,
+      t1 | f, t3 | f, t2 | f, t2 | b, t3 | b, t1 | b,
+      t3 | f, t2 | f, t1 | f, t1 | b, t2 | b, t3 | b,
+      t3 | b, t2 | b, t1 | b, t1 | f, t2 | f, t3 | f,
+      t1 | b, t3 | b, t2 | b, t2 | f, t3 | f, t1 | f,
+      t0 | b, t1 | b, t3 | b, t3 | f, t1 | f, t0 | f
+    ]
+  }
+]
+function cycleState (i = 0) {
   const { descText, transform } = states[i % states.length]
   transformGrid(grid, transform)
   setDesc(desc, descText)
   setTimeout(_ => cycleState(i + 1), 3000)
 }
-cycleState()</code></pre>
+cycleState()</code></pre></figure>
     <p>And without further ado&hellip;</p>
     <figure>
       <div class="logo"></div>

@@ -63,10 +63,14 @@ article {
   margin: 3rem auto;
 }
 
-h2, h3, p, pre.language-js {
+h2, h3, p {
   margin: 0 auto 1.5rem;
+}
+
+h2, h3, p, pre.language-js, figcaption {
   box-sizing: border-box;
   max-width: 40rem;
+  width: 100%;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
 }
@@ -95,7 +99,7 @@ figure {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  margin: 6rem 0;
+  margin-bottom: 1.5rem;
 }
 
 @media (max-width: 50rem) {
