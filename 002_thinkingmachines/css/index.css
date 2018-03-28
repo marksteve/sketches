@@ -99,6 +99,7 @@ figure {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
+	flex-direction: column;
   margin-bottom: 1.5rem;
 }
 
